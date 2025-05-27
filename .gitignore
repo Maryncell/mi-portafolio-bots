@@ -1,4 +1,0 @@
-# Archivos a ignorar
-*.env
-__pycache__/
-*.sqlite3
