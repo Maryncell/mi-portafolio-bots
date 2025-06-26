@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sellbot - Asistente de Ventas Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* bg-slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 580px; /* Slightly wider for better layout on desktop */
+            height: 88vh; /* Responsive height */
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5rem; /* rounded-3xl */
+            background-color: #1e293b; /* slate-800 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08); /* shadow-2xl */
+            overflow: hidden;
+            position: relative; /* Para el carrito flotante */
+        }
+        .chat-header {
+            background-color: #334155; /* slate-700 */
+            padding: 1.5rem;
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            text-align: center;
+            font-weight: 700; /* font-bold */
+            font-size: 1.5rem; /* text-2xl */
+            color: #f8fafc; /* slate-50 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            position: relative;
+        }
+        .chat-header::before {
+            content: '🤖'; /* Bot icon */
+            font-size: 1.8rem;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background-color: #1e293b; /* slate-800 */
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Space between messages */
+        }
+        .message-bubble {
+            max-width: 85%;
+            padding: 0.75rem 1.25rem;
+            border-radius: 1.25rem; /* rounded-xl */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            line-height: 1.5;
+        }
+        .user-message {
+            background-color: #6366f1; /* indigo-500 */
+            color: #ffffff;
+            margin-left: auto;
+            border-bottom-right-radius: 0.25rem; /* rounded-br-sm */
+        }
+        .bot-message {
+            background-color: #334155; /* slate-700 */
+            color: #e2e8f0;
+            margin-right: auto;
+            border-bottom-left-radius: 0.25rem; /* rounded-bl-sm */
+        }
+        .bot-message p {
+            margin-bottom: 0.5rem; /* Adjust for spacing in bot text */
+        }
+
+        /* Product Card Styling (for detailed product display) */
+        .product-card {
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 1rem; /* rounded-xl */
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-top: 0.75rem; /* Space from message text */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            color: #f8fafc;
+        }
+        .product-card img {
+            border-radius: 0.5rem; /* rounded-lg */
+            margin-bottom: 0.75rem;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border: 2px solid #6366f1; /* indigo-500 border */
+        }
+        .product-card h4 {
+            font-weight: 600; /* font-semibold */
+            font-size: 1.125rem; /* text-lg */
+            margin-bottom: 0.25rem;
+        }
+        .product-card p {
+            font-size: 0.875rem; /* text-sm */
+            color: #cbd5e1; /* slate-300 */
+            margin-bottom: 0.5rem;
+        }
+        .product-card .price {
+            font-weight: 700; /* font-bold */
+            font-size: 1.25rem; /* text-xl */
+            color: #a78bfa; /* violet-400 */
+            margin-bottom: 0.75rem;
+        }
+        .product-card .features-list {
+            text-align: left;
+            width: 100%;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+        .product-card .features-list li {
+            list-style: disc; /* Use a disc for list items */
+            margin-left: 1.5rem; /* Indent list items */
+            margin-bottom: 0.25rem;
+        }
+        .product-card .button-group {
+            display: flex;
+            gap: 0.75rem; /* Space between buttons */
+            width: 100%;
+            justify-content: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+        .product-card button, .product-card a.block {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            text-decoration: none; /* No underline for links */
+            text-align: center;
+            flex: 1; /* Make buttons expand to fill space */
+            min-width: 150px; /* Ensure a minimum width */
+            box-sizing: border-box; /* Include padding/border in width */
+        }
+        .product-card .add-to-cart-btn {
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+        }
+        .product-card .add-to-cart-btn:hover {
+            background-color: #d97706; /* amber-600 */
+            transform: translateY(-1px);
+        }
+        .product-card .buy-now-btn {
+            background-color: #10b981; /* emerald-500 */
+            color: white;
+        }
+        .product-card .buy-now-btn:hover {
+            background-color: #059669; /* emerald-600 */
+            transform: translateY(-1px);
+        }
+        .product-card .payment-link-btn {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+        }
+        .product-card .payment-link-btn:hover {
+            background-color: #2563eb; /* blue-600 */
+            transform: translateY(-1px);
+        }
+
+
+        /* Simple Product List (for initial "productos" query) */
+        .simple-product-list {
+            margin-top: 0.75rem;
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            color: #e2e8f0;
+        }
+        .simple-product-list ul {
+            list-style: none; /* Remove default bullets */
+            padding: 0;
+            margin: 0;
+        }
+        .simple-product-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #4a5568; /* gray-600 */
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping for responsiveness */
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem; /* Reduce gap for smaller screens */
+        }
+        .simple-product-list li:last-child {
+            border-bottom: none;
+        }
+        .simple-product-list .product-name {
+            font-weight: 600;
+            color: #f8fafc;
+            flex-grow: 1; /* Allow name to grow */
+        }
+        .simple-product-list .product-code {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            flex-shrink: 0; /* Prevent code from wrapping */
+        }
+        .simple-product-list button {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        .simple-product-list button:hover {
+            background-color: #5a5fe0;
+        }
+
+
+        /* Suggestion Buttons Styling */
+        .suggestions-area {
+            padding: 1rem;
+            background-color: #334155; /* slate-700 */
+            border-top: 1px solid #475569; /* slate-600 */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .suggestion-button {
+            background-color: #475569; /* slate-600 */
+            color: #e2e8f0;
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .suggestion-button:hover {
+            background-color: #6366f1; /* indigo-500 */
+            transform: translateY(-2px);
+        }
+        .chat-input-area {
+            background-color: #334155; /* slate-700 */
+            padding: 1.5rem;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        .chat-input-area input {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #475569; /* slate-600 */
+            color: #e2e8f0;
+            padding: 0.8rem 1.2rem;
+            border-radius: 0.75rem;
+            flex-grow: 1;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .chat-input-area input::placeholder {
+            color: #94a3b8; /* slate-400 */
+        }
+        .chat-input-area input:focus {
+            outline: none;
+            border-color: #6366f1; /* indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .chat-input-area button {
+            background-color: #6366f1; /* indigo-600 */
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chat-input-area button:hover {
+            background-color: #5a5fe0; /* indigo-700 */
+            transform: translateY(-1px);
+        }
+        /* Scrollbar styles for modern browsers */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* indigo-500 */
+        }
+
+        /* Cart Overlay Styles */
+        .cart-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .cart-modal {
+            background-color: #1e293b; /* slate-800 */
+            border-radius: 1rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .cart-modal h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f8fafc;
+            text-align: center;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .cart-modal h3::before {
+            content: '🛒';
+            font-size: 1.8rem;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: #2d3748; /* gray-700 */
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+            gap: 0.75rem;
+        }
+        .cart-item span {
+            flex-grow: 1;
+        }
+        .cart-item .item-name {
+            font-weight: 600;
+        }
+        .cart-item .item-price {
+            font-weight: 700;
+            color: #a78bfa;
+            white-space: nowrap;
+        }
+        .cart-item .remove-item-btn {
+            background: none;
+            border: none;
+            color: #ef4444; /* red-500 */
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .cart-item .remove-item-btn:hover {
+            color: #dc2626; /* red-600 */
+        }
+        .cart-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: right;
+            margin-top: 1rem;
+            color: #f8fafc;
+        }
+        .cart-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+        .cart-actions button {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            flex: 1;
+            min-width: 120px; /* Ensure buttons don't get too small */
+        }
+        .cart-actions button:hover {
+            background-color: #5a5fe0;
+        }
+        .cart-actions .close-cart-btn {
+            background-color: #dc2626; /* red-600 */
+        }
+        .cart-actions .close-cart-btn:hover {
+            background-color: #b91c1c; /* red-700 */
+        }
+        .cart-actions .checkout-cart-btn {
+            background-color: #10b981; /* emerald-500 */
+        }
+        .cart-actions .checkout-cart-btn:hover {
+            background-color: #059669; /* emerald-600 */
+        }
+        .cart-actions .clear-cart-btn {
+            background-color: #f59e0b; /* amber-500 */
+        }
+        .cart-actions .clear-cart-btn:hover {
+            background-color: #d97706; /* amber-600 */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .chat-container {
+                height: 95vh; /* Take more height on small screens */
+                border-radius: 0.5rem;
+            }
+            .chat-header {
+                padding: 1rem;
+                font-size: 1.25rem;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            .chat-messages, .suggestions-area, .chat-input-area {
+                padding: 0.75rem;
+            }
+            .message-bubble {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .product-card button, .product-card a.block {
+                min-width: unset; /* Let flex control width */
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+            .simple-product-list li {
+                flex-direction: column; /* Stack items on small screens */
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            .simple-product-list button {
+                width: 100%; /* Full width button */
+            }
+            .suggestions-area {
+                flex-direction: column; /* Stack suggestion buttons */
+            }
+            .suggestion-button {
+                width: 100%;
+                font-size: 0.9rem;
+            }
+            .chat-input-area {
+                flex-direction: column; /* Stack input and button */
+                gap: 0.5rem;
+            }
+            .chat-input-area input, .chat-input-area button {
+                width: 100%;
+            }
+            .cart-modal {
+                padding: 1rem;
+                max-width: 95%;
+            }
+            .cart-actions button {
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            Sellbot <span class="text-sm font-normal text-slate-300">- Asistente de Ventas IA</span>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            <!-- Mensajes se insertarán aquí -->
+        </div>
+        <div id="suggestionsArea" class="suggestions-area">
+            <!-- Botones de sugerencia dinámicos se insertarán aquí -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Escribe tu mensaje..." autocomplete="off">
+            <button onclick="sendUserMessage()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                    <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                </svg>
+                Enviar
+            </button>
+        </div>
+
+        <!-- Cart Overlay (hidden by default) -->
+        <div id="cartOverlay" class="cart-overlay hidden">
+            <div class="cart-modal">
+                <h3>Tu Carrito</h3>
+                <div id="cartItemsList">
+                    <!-- Cart items will be rendered here -->
+                </div>
+                <div id="cartTotal" class="cart-total">Total: $0.00</div>
+                <div class="cart-actions">
+                    <button class="checkout-cart-btn" onclick="checkoutCart()">Finalizar Compra</button>
+                    <button class="clear-cart-btn" onclick="clearCart()">Vaciar Carrito</button>
+                    <button class="close-cart-btn" onclick="viewCart(false)">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const suggestionsArea = document.getElementById('suggestionsArea');
+        const cartOverlay = document.getElementById('cartOverlay');
+        const cartItemsList = document.getElementById('cartItemsList');
+        const cartTotalDisplay = document.getElementById('cartTotal');
+
+        let currentContext = { step: 'welcome', last_queried_product_code: null, contact_info: {} }; // Estado inicial del bot
+        let shoppingCart = []; // Array para almacenar los productos en el carrito
+        let cartVisible = false; // Estado para controlar la visibilidad del carrito
+
+        // Función para añadir mensajes al chat
+        function addMessage(sender, text, data = null) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message-bubble');
+            
+            if (sender === 'user') {
+                messageElement.classList.add('user-message');
+                messageElement.textContent = text;
+            } else {
+                messageElement.classList.add('bot-message');
+                let innerContent = `<p>${text}</p>`; // Default text content
+
+                // Renderizar lista simple de productos
+                if (data && data.type === 'simple_product_list' && data.products) {
+                    innerContent += `<div class="simple-product-list mt-2"><ul>`;
+                    data.products.forEach(product => {
+                        innerContent += `
+                            <li>
+                                <span class="product-name">${product.name}</span>
+                                <span class="product-code">(${product.code})</span>
+                                <button onclick="sendMessage('Ver detalles de ${product.code}')">Ver detalles</button>
+                            </li>
+                        `;
+                    });
+                    innerContent += `</ul></div>`;
+                } 
+                // Renderizar tarjeta de producto detallada (para consulta o compra)
+                else if (data && (data.type === 'product_card' || data.type === 'product_card_buy_options' || data.type === 'purchase_confirmation')) {
+                    innerContent += `
+                        <div class="product-card">
+                            <img src="${data.image_url}" alt="${data.name}">
+                            <h4>${data.name}</h4>
+                            <p>${data.description || ''}</p>
+                            <ul class="features-list">
+                                ${data.features && data.features.length > 0 ? data.features.map(feature => `<li>${feature}</li>`).join('') : ''}
+                            </ul>
+                            <p class="price">$${data.price ? data.price.toFixed(2) : 'N/A'}</p>
+                            ${data.type === 'purchase_confirmation' ? 
+                                `<a href="${data.payment_link}" target="_blank" class="buy-now-btn payment-link-btn block w-full text-center mt-3">Ir a pagar ahora</a>` 
+                                : `
+                                <div class="button-group">
+                                    <button class="add-to-cart-btn" onclick="sendMessage('Añadir al carrito ${data.code}')">Añadir al carrito</button>
+                                    <button class="buy-now-btn" onclick="sendMessage('Comprar ${data.code}')">Comprar ahora</button>
+                                </div>
+                                `
+                            }
+                        </div>
+                    `;
+                }
+                // Handle "add to cart" confirmation specially to add item to local cart
+                else if (data && data.type === 'add_to_cart_confirmation' && data.product) {
+                    addToCart(data.product); // Add the product to the local shopping cart
+                }
+
+
+                messageElement.innerHTML = innerContent;
+            }
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+
+        // --- Funciones de Carrito de Compras ---
+        function addToCart(product) {
+            const existingProduct = shoppingCart.find(item => item.code === product.code);
+            if (existingProduct) {
+                existingProduct.quantity++;
+            } else {
+                shoppingCart.push({ ...product, quantity: 1 });
+            }
+            console.log('Carrito actualizado:', shoppingCart);
+            renderSuggestions(currentContext.step); // Re-render suggestions to update cart count
+        }
+
+        function renderCart() {
+            cartItemsList.innerHTML = '';
+            let total = 0;
+            if (shoppingCart.length === 0) {
+                cartItemsList.innerHTML = '<p class="text-center text-slate-400">Tu carrito está vacío.</p>';
+            } else {
+                shoppingCart.forEach((item, index) => {
+                    cartItemsList.innerHTML += `
+                        <div class="cart-item">
+                            <span class="item-name">${item.name} (x${item.quantity})</span>
+                            <span class="item-price">$${(item.price * item.quantity).toFixed(2)}</span>
+                            <button class="remove-item-btn" onclick="removeFromCart(${index})">
+                                &times;
+                            </button>
+                        </div>
+                    `;
+                    total += item.price * item.quantity;
+                });
+            }
+            cartTotalDisplay.textContent = `Total: $${total.toFixed(2)}`;
+        }
+
+        function removeFromCart(index) {
+            shoppingCart.splice(index, 1);
+            renderCart(); // Re-render the cart after removal
+            renderSuggestions(currentContext.step); // Update cart count in main suggestions
+        }
+
+        function viewCart(show) {
+            cartVisible = show;
+            if (show) {
+                renderCart();
+                cartOverlay.classList.remove('hidden');
+            } else {
+                cartOverlay.classList.add('hidden');
+            }
+        }
+
+        function clearCart() {
+            shoppingCart = [];
+            renderCart();
+            addMessage('bot', '✅ Tu carrito ha sido vaciado.');
+            viewCart(false); // Close cart after clearing
+            renderSuggestions(currentContext.step); // Update cart count in main suggestions
+        }
+
+        function checkoutCart() {
+            if (shoppingCart.length === 0) {
+                addMessage('bot', '❌ Tu carrito está vacío. Por favor, añade productos antes de finalizar la compra.');
+                viewCart(false);
+                return;
+            }
+            const total = shoppingCart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2);
+            const itemsList = shoppingCart.map(item => `${item.name} (x${item.quantity})`).join(', ');
+            addMessage('bot', `Proceeding to checkout for: ${itemsList}. Total: $${total}. (Simulated payment link: https://checkout.mockup.com/cart-checkout-total-${total})`);
+            
+            // Optionally clear cart after simulated checkout
+            shoppingCart = [];
+            renderCart();
+            viewCart(false);
+            renderSuggestions(currentContext.step); // Update cart count in main suggestions
+        }
+
+        // --- Fin Funciones de Carrito de Compras ---
+
+
+        // Función para renderizar botones de sugerencia dinámicos
+        function renderSuggestions(step) {
+            suggestionsArea.innerHTML = ''; // Limpiar sugerencias anteriores
+            let suggestions = [];
+
+            // Add "Ver Carrito" button if items are in cart
+            if (shoppingCart.length > 0) {
+                suggestions.push({ text: `Ver Carrito (${shoppingCart.length})`, command: "ver carrito" });
+            }
+
+            switch (step) {
+                case 'welcome':
+                case 'main_menu':
+                case 'goodbye':
+                case 'order_status_provided':
+                case 'purchase_completed':
+                case 'product_out_of_stock':
+                case 'product_info_provided':
+                case 'human_contact_collected':
+                case 'product_list_provided': // After listing products, suggest relevant next steps
+                case 'product_added_to_cart': // After adding to cart, offer cart view or continue shopping
+                    suggestions = suggestions.concat([ // Concatenate with existing suggestions
+                        { text: "Ver productos", command: "productos" },
+                        { text: "Comprar un producto", command: "comprar" },
+                        { text: "Rastrear pedido", command: "rastrear pedido" },
+                        { text: "Preguntas Frecuentes", command: "preguntas frecuentes" },
+                        { text: "Hablar con un humano", command: "hablar con un humano" },
+                        { text: "Reiniciar", command: "reset" }
+                    ]);
+                    break;
+                case 'awaiting_order_id':
+                    suggestions = suggestions.concat([
+                        { text: "Mi pedido es 12345", command: "12345" },
+                        { text: "Mi pedido es 67890", command: "67890" },
+                        { text: "Necesito ayuda", command: "hablar con un humano" }
+                    ]);
+                    break;
+                case 'awaiting_product_name_for_purchase':
+                case 'awaiting_product_name_for_inquiry':
+                    suggestions = suggestions.concat([
+                        { text: "PC Gamer Elite", command: "PC Gamer Elite" },
+                        { text: "Laptop Profesional", command: "Laptop Profesional" },
+                        { text: "Monitor Ultra HD", command: "Monitor Ultra HD" },
+                        { text: "Ver todos los productos", command: "productos" },
+                        { text: "Cancelar", command: "cancelar" }
+                    ]);
+                    break;
+                case 'awaiting_faq_topic': // Specific suggestions for FAQ topics
+                    suggestions = suggestions.concat([
+                        { text: "Políticas de Envío", command: "politicas de envio" },
+                        { text: "Políticas de Devolución", command: "politicas de devolucion" },
+                        { text: "Métodos de Pago", command: "metodos de pago" },
+                        { text: "Volver al menú principal", command: "menu principal" }
+                    ]);
+                    break;
+                case 'faq_answered_prompt': // NEW: Suggestions after an FAQ is answered
+                    suggestions = suggestions.concat([
+                        { text: "Sí, otro tema de FAQ", command: "sí" },
+                        { text: "Volver al menú principal", command: "menu principal" }
+                    ]);
+                    break;
+                case 'collect_contact_for_human':
+                    suggestions = suggestions.concat([
+                        { text: "Soy Juan Pérez, juan@ejemplo.com, 1123456789", command: "Soy Juan Pérez, mi email es juan@ejemplo.com y mi teléfono es 1123456789" }, // Ejemplo
+                        { text: "Volver al menú principal", command: "menu principal" }
+                    ]);
+                    break;
+                case 'product_selected_for_purchase': // After selecting a product for buying
+                    suggestions = suggestions.concat([
+                        { text: "Añadir al carrito", command: "añadir al carrito" },
+                        { text: "Comprar directamente", command: "comprar ahora" },
+                        { text: "Ver otros productos", command: "productos" },
+                        { text: "Cancelar compra", command: "cancelar" }
+                    ]);
+                    break;
+                default: // Fallback suggestions if step is not recognized
+                    suggestions = suggestions.concat([
+                        { text: "Ver productos", command: "productos" },
+                        { text: "Comprar un producto", command: "comprar" },
+                        { text: "Rastrear pedido", "command": "rastrear pedido" },
+                        { text: "Preguntas Frecuentes", command: "preguntas frecuentes" },
+                        { text: "Hablar con un humano", command: "hablar con un humano" },
+                        { text: "Reiniciar", command: "reset" }
+                    ]);
+                    break;
+            }
+
+            // Filter out duplicate commands (if any from concatenation)
+            const uniqueSuggestions = [];
+            const seenCommands = new Set();
+            for (const sug of suggestions) {
+                if (!seenCommands.has(sug.command)) {
+                    uniqueSuggestions.push(sug);
+                    seenCommands.add(sug.command);
+                }
+            }
+
+            uniqueSuggestions.forEach(sug => {
+                const button = document.createElement('button');
+                button.classList.add('suggestion-button');
+                button.textContent = sug.text;
+                button.onclick = () => sendMessage(sug.command);
+                suggestionsArea.appendChild(button);
+            });
+        }
+
+        // Función principal para enviar mensajes al backend
+        async function sendMessage(messageText) {
+            // Special handling for "ver carrito" command
+            if (messageText.toLowerCase() === 'ver carrito') {
+                viewCart(true);
+                return; // Do not send this command to backend
+            }
+             // Special handling for "comprar ahora" (from product card)
+            if (messageText.toLowerCase() === 'comprar ahora') {
+                // If this is triggered, it should be after a product card is shown,
+                // so we can assume the last_queried_product_code in context or
+                // the user explicitly typed 'comprar <product>' which will be handled by backend.
+                // For direct 'comprar ahora' button, we need to know WHICH product.
+                // For simplicity, we assume this button is clicked after a product card,
+                // and the backend will manage the 'purchase_completed' step.
+                // No explicit product code is sent here, backend handles from context/previous message
+            }
+
+
+            if (messageText.trim() === '') return;
+
+            addMessage('user', messageText); // Muestra el mensaje del usuario
+            userInput.value = ''; // Limpia el input
+
+            try {
+                const response = await fetch('http://localhost:5000/api/sellbot_chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: messageText, context: currentContext }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentContext = data.context; // Actualiza el contexto con el que envía el bot
+
+                // Asegúrate de que data.data exista antes de pasarlo
+                addMessage('bot', data.response, data.data || null); 
+                renderSuggestions(currentContext.step); // Renderiza nuevas sugerencias basadas en el paso del bot
+
+            } catch (error) {
+                console.error('Error al comunicarse con Sellbot backend:', error);
+                addMessage('bot', 'Lo siento, hubo un problema técnico al comunicarme con el asistente. Asegúrate de que el servidor esté activo (puerto 5000).');
+                renderSuggestions('main_menu'); // Ofrece sugerencias básicas si hay un error
+            }
+        }
+
+        // Evento para enviar mensaje al presionar Enter
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+
+        // Función para el botón de enviar
+        function sendUserMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                sendMessage(message);
+            }
+        }
+
+        // Mensaje de bienvenida inicial del bot y renderizado de sugerencias
+        window.onload = function() {
+            sendMessage('hola'); // Envía "hola" inicial para obtener el mensaje de bienvenida y las primeras sugerencias
+        };
+    </script>
+</body>
+</html>
