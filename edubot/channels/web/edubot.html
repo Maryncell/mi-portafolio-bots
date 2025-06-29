@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduBot - Agente Educativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* bg-slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 580px; /* Wider for better content display */
+            height: 88vh; /* Responsive height */
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5rem; /* rounded-3xl */
+            background-color: #1e293b; /* slate-800 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08); /* shadow-2xl */
+            overflow: hidden;
+            position: relative;
+        }
+        .chat-header {
+            background-color: #334155; /* slate-700 */
+            padding: 1.5rem;
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            text-align: center;
+            font-weight: 700; /* font-bold */
+            font-size: 1.5rem; /* text-2xl */
+            color: #f8fafc; /* slate-50 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            position: relative;
+        }
+        .chat-header::before {
+            content: '🎓'; /* Graduation Cap emoji */
+            font-size: 1.8rem;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background-color: #1e293b; /* slate-800 */
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Space between messages */
+        }
+        .message-bubble {
+            max-width: 85%;
+            padding: 0.75rem 1.25rem;
+            border-radius: 1.25rem; /* rounded-xl */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            line-height: 1.5;
+        }
+        .user-message {
+            background-color: #6366f1; /* indigo-500 */
+            color: #ffffff;
+            margin-left: auto;
+            border-bottom-right-radius: 0.25rem; /* rounded-br-sm */
+        }
+        .bot-message {
+            background-color: #334155; /* slate-700 */
+            color: #e2e8f0;
+            margin-right: auto;
+            border-bottom-left-radius: 0.25rem; /* rounded-bl-sm */
+        }
+        .bot-message p {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Service/Course Card Styling */
+        .course-card { /* Renamed from .service-card for clarity in EduBot */
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 1rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-top: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            color: #f8fafc;
+        }
+        .course-card h4 {
+            font-weight: 600;
+            font-size: 1.25rem; /* text-xl */
+            margin-bottom: 0.25rem;
+        }
+        .course-card .description {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+        }
+        .course-card .details-list {
+            text-align: left;
+            width: 100%;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+        .course-card .details-list li {
+            list-style: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .course-card .price {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #a78bfa; /* violet-400 */
+            margin-bottom: 0.75rem;
+        }
+        .course-card .course-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        /* No button-group here, buttons will be rendered dynamically below the card */
+
+        /* Simple Course List (Renamed from Simple Service List) */
+        .simple-course-list {
+            margin-top: 0.75rem;
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            color: #e2e8f0;
+        }
+        .simple-course-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .simple-course-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #4a5568; /* gray-600 */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .simple-course-list li:last-child {
+            border-bottom: none;
+        }
+        .simple-course-list .course-name { /* Renamed from service-name */
+            font-weight: 600;
+            color: #f8fafc;
+            flex-grow: 1;
+        }
+        .simple-course-list .course-details { /* Added for duration/code */
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            flex-shrink: 0;
+        }
+        .simple-course-list button {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        .simple-course-list button:hover {
+            background-color: #5a5fe0;
+        }
+
+        /* Suggestion Buttons Styling */
+        .suggestions-area {
+            padding: 1rem;
+            background-color: #334155; /* slate-700 */
+            border-top: 1px solid #475569; /* slate-600 */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .suggestion-button {
+            background-color: #475569; /* slate-600 */
+            color: #e2e8f0;
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .suggestion-button:hover {
+            background-color: #6366f1; /* indigo-500 */
+            transform: translateY(-2px);
+        }
+        .chat-input-area {
+            background-color: #334155; /* slate-700 */
+            padding: 1.5rem;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        .chat-input-area input {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #475569; /* slate-600 */
+            color: #e2e8f0;
+            padding: 0.8rem 1.2rem;
+            border-radius: 0.75rem;
+            flex-grow: 1;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .chat-input-area input::placeholder {
+            color: #94a3b8; /* slate-400 */
+        }
+        .chat-input-area input:focus {
+            outline: none;
+            border-color: #6366f1; /* indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .chat-input-area button {
+            background-color: #6366f1; /* indigo-600 */
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chat-input-area button:hover {
+            background-color: #5a5fe0; /* indigo-700 */
+            transform: translateY(-1px);
+        }
+        /* Scrollbar styles for modern browsers */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* indigo-500 */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .chat-container {
+                height: 95vh;
+                border-radius: 0.5rem;
+            }
+            .chat-header {
+                padding: 1rem;
+                font-size: 1.25rem;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            .chat-messages, .suggestions-area, .chat-input-area {
+                padding: 0.75rem;
+            }
+            .message-bubble {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .course-card button { /* Renamed */
+                min-width: unset;
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+            .simple-course-list li { /* Renamed */
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            .simple-course-list button { /* Renamed */
+                width: 100%;
+            }
+            .suggestions-area {
+                flex-direction: column;
+            }
+            .suggestion-button {
+                width: 100%;
+                font-size: 0.9rem;
+            }
+            .chat-input-area {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .chat-input-area input, .chat-input-area button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            EduBot <span class="text-sm font-normal text-slate-300">- Agente Educativo</span>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            <!-- Messages will be inserted here -->
+        </div>
+        <div id="suggestionsArea" class="suggestions-area">
+            <!-- Dynamic suggestion buttons will be inserted here -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Escribe tu mensaje..." autocomplete="off">
+            <button onclick="sendUserMessage()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                    <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                </svg>
+                Enviar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const suggestionsArea = document.getElementById('suggestionsArea');
+        let currentContext = { step: 'welcome', last_queried_course_code: null, contact_info: {} };
+
+        function addMessage(sender, text, data = null) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message-bubble');
+            
+            if (sender === 'user') {
+                messageElement.classList.add('user-message');
+                messageElement.textContent = text;
+            } else {
+                messageElement.classList.add('bot-message');
+                let innerContent = `<p>${text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`;
+
+                // Render simple course list
+                if (data && data.type === 'simple_course_list' && data.courses) {
+                    innerContent += `<div class="simple-course-list mt-2"><ul>`;
+                    data.courses.forEach(course => {
+                        innerContent += `
+                            <li>
+                                <span class="course-name">${course.name}</span>
+                                <span class="course-details">(${course.code}) - ${course.duration}</span>
+                                <button onclick="sendMessage('info_curso_${course.code}')">Ver detalles</button>
+                            </li>
+                        `;
+                    });
+                    innerContent += `</ul></div>`;
+                } 
+                // Render detailed course card
+                else if (data && data.type === 'course_card') {
+                    // Removed hardcoded buttons from here. They will be rendered by renderSuggestions
+                    const curriculumList = data.curriculum && data.curriculum.length > 0
+                        ? `<h4>Contenido:</h4><ul class="details-list">${data.curriculum.map(item => `<li>${item}</li>`).join('')}</ul>`
+                        : '';
+                    innerContent += `
+                        <div class="course-card">
+                            <img src="${data.image_url}" alt="Imagen del curso" class="course-image">
+                            <h4>${data.name}</h4>
+                            <p class="description">${data.description || ''}</p>
+                            <ul class="details-list">
+                                <li><strong>Duración:</strong> ${data.duration}</li>
+                                <li><strong>Próximas Fechas:</strong> ${data.start_dates.join(', ')}</li>
+                                <li><strong>Requisitos:</strong> ${data.requirements}</li>
+                                <li><strong>Certificación:</strong> ${data.certification}</li>
+                            </ul>
+                            ${curriculumList}
+                            <p class="price">Precio: $${data.price ? data.price.toFixed(2) : 'N/A'}</p>
+                        </div>
+                    `;
+                }
+                messageElement.innerHTML = innerContent;
+            }
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+
+        // Modified renderSuggestions to accept an array of buttons directly
+        function renderSuggestions(stepOrButtonsArray, optionalButtonsArray) {
+            suggestionsArea.innerHTML = ''; // Clear existing buttons
+
+            let buttonsToRender = [];
+
+            if (Array.isArray(stepOrButtonsArray)) {
+                // If the first argument is an array, use it directly as buttons
+                buttonsToRender = stepOrButtonsArray;
+            } else if (optionalButtonsArray && Array.isArray(optionalButtonsArray)) {
+                // If a step is passed AND an array of buttons (for custom_buttons)
+                buttonsToRender = optionalButtonsArray;
+            } else {
+                // Default behavior based on the context step
+                const step = stepOrButtonsArray;
+                switch (step) {
+                    case 'welcome':
+                    case 'main_menu':
+                    case 'goodbye':
+                    case 'enrollment_completed':
+                    case 'human_contact_collected':
+                        buttonsToRender = [
+                            { text: "Ver Cursos", action: "cursos" },
+                            { text: "Inscribirme", action: "inscribirme" },
+                            { text: "Preguntas Frecuentes", action: "preguntas frecuentes" },
+                            { text: "Hablar con un asesor", action: "hablar con un asesor" },
+                            { text: "Reiniciar", action: "reiniciar" }
+                        ];
+                        break;
+                    case 'awaiting_course_for_enrollment':
+                        buttonsToRender = [
+                            { text: "Inglés para Principiantes A1", action: "inscribirme_curso_ENG101" },
+                            { text: "Introducción a Python", action: "inscribirme_curso_PROG201" },
+                            { text: "Marketing Digital Avanzado", action: "inscribirme_curso_MKT301" },
+                            { text: "Ver todos los cursos", action: "cursos" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_enrollment_name':
+                        buttonsToRender = [
+                            { text: "Mi nombre es [Tu Nombre]", action: "Soy [Tu Nombre]" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_enrollment_email':
+                        buttonsToRender = [
+                            { text: "Mi email es tunombre@ejemplo.com", action: "tunombre@ejemplo.com" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_edu_faq_topic':
+                        buttonsToRender = [
+                            { text: "Horarios", action: "horarios" },
+                            { text: "Pagos", action: "pagos" },
+                            { text: "Profesores", action: "profesores" },
+                            { text: "Plataformas", action: "plataformas" },
+                            { text: "Materiales", action: "materiales" },
+                            { text: "Reglamentos", action: "reglamentos" },
+                            { text: "Inscripción", action: "inscripcion" },
+                            { text: "Certificaciones", action: "certificaciones" },
+                            { text: "Prerrequisitos", action: "prerrequisitos" },
+                            { text: "Cancelar", action: "cancelar"}
+                        ];
+                        break;
+                    case 'awaiting_course_for_info_prereq': // For prerequisites
+                        buttonsToRender = [
+                            { text: "Requisitos de Inglés A1", action: "info_curso_ENG101" },
+                            { text: "Requisitos de Python", action: "info_curso_PROG201" },
+                            { text: "Ver todos los cursos", action: "cursos" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'collect_contact_for_human':
+                        buttonsToRender = [
+                            { text: "Soy [Nombre], [Email], [Teléfono]", action: "Soy Ana García, ana@ejemplo.com, +5491112345678" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'course_info_provided': // After showing a detailed course card
+                    case 'course_list_provided': // After showing a list of courses
+                    case 'edu_faq_answered_prompt': // After an FAQ is answered
+                        buttonsToRender = [
+                            { text: "Inscribirme en un curso", action: "inscribirme" },
+                            { text: "Ver otros cursos", action: "cursos" },
+                            { text: "Preguntas Frecuentes", action: "preguntas frecuentes" },
+                            { text: "Menú principal", action: "menu principal" }
+                        ];
+                        break;
+                    default:
+                        buttonsToRender = [
+                            { text: "Ver Cursos", action: "cursos" },
+                            { text: "Inscribirme", action: "inscribirme" },
+                            { text: "Preguntas Frecuentes", action: "preguntas frecuentes" },
+                            { text: "Hablar con un asesor", action: "hablar con un asesor"},
+                            { text: "Reiniciar", action: "reiniciar"}
+                        ];
+                        break;
+                }
+            }
+
+            const uniqueSuggestions = [];
+            const seenActions = new Set();
+            buttonsToRender.forEach(sug => {
+                // Use the 'action' property for uniqueness, or 'command' if that's what the backend sends
+                const actionKey = sug.action || sug.command; 
+                if (actionKey && !seenActions.has(actionKey)) {
+                    uniqueSuggestions.push(sug);
+                    seenActions.add(actionKey);
+                }
+            });
+
+            uniqueSuggestions.forEach(sug => {
+                const button = document.createElement('button');
+                button.classList.add('suggestion-button');
+                button.textContent = sug.text;
+                button.onclick = () => sendMessage(sug.action || sug.command); // Use .action or .command
+                suggestionsArea.appendChild(button);
+            });
+            suggestionsArea.style.display = buttonsToRender.length > 0 ? 'flex' : 'none'; // Show/hide container
+        }
+
+        async function sendMessage(messageText) {
+            const trimmedMessage = messageText.trim();
+            if (!trimmedMessage) return;
+
+            // Update userInput.value if message comes from a suggestion button
+            if (userInput.value !== trimmedMessage) {
+                 userInput.value = trimmedMessage;
+            }
+            
+            addMessage('user', trimmedMessage);
+            userInput.value = ''; // Clear input after sending
+            
+            // Clear suggestions immediately to avoid stale buttons
+            suggestionsArea.innerHTML = ''; 
+            suggestionsArea.style.display = 'none';
+
+            try {
+                const response = await fetch('http://localhost:5005/api/edubot_chat', { // Check port 5005
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: trimmedMessage, context: currentContext, user_id: 'web_user' }),
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.json().catch(() => ({ message: "Unknown error" }));
+                    console.error('Server error response:', errorBody);
+                    addMessage('bot', `Lo siento, hubo un problema técnico al comunicarme con Edubot. Error: ${errorBody.message || 'Desconocido'}. Asegúrate de que el servidor esté activo (puerto 5005).`);
+                    renderSuggestions('main_menu'); // Render main menu buttons on critical error
+                    return;
+                }
+
+                const data = await response.json();
+                currentContext = data.context;
+
+                addMessage('bot', data.response, data.data || null);
+                
+                // IMPORTANT: Always render suggestions based on the new context step,
+                // and if the backend specifically sends 'action_buttons' type, use those.
+                if (data.data && data.data.type === 'action_buttons' && data.data.buttons) {
+                    renderSuggestions(data.data.buttons); // Pass custom buttons directly
+                } else {
+                    renderSuggestions(currentContext.step); // Fallback to context-based suggestions
+                }
+
+            } catch (error) {
+                console.error('Error communicating with EduBot backend:', error);
+                addMessage('bot', 'Lo siento, hubo un problema de conexión al comunicarme con Edubot. Asegúrate de que el servidor esté activo (puerto 5005).');
+                renderSuggestions('main_menu'); // Re-render main menu buttons on connection error
+            }
+        }
+
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+
+        function sendUserMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                sendMessage(message);
+            }
+        }
+
+        window.onload = function() {
+            sendMessage('hola'); // Initial greeting
+        };
+    </script>
+</body>
+</html>
