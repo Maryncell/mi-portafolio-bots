@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBot - Asistente Médico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* bg-slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 580px; /* Wider for better content display */
+            height: 88vh; /* Responsive height */
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.5rem; /* rounded-3xl */
+            background-color: #1e293b; /* slate-800 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08); /* shadow-2xl */
+            overflow: hidden;
+            position: relative;
+        }
+        .chat-header {
+            background-color: #334155; /* slate-700 */
+            padding: 1.5rem;
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            text-align: center;
+            font-weight: 700; /* font-bold */
+            font-size: 1.5rem; /* text-2xl */
+            color: #f8fafc; /* slate-50 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            position: relative;
+        }
+        .chat-header::before {
+            content: '🩺'; /* Stethoscope emoji for HealthBot */
+            font-size: 1.8rem;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background-color: #1e293b; /* slate-800 */
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Space between messages */
+        }
+        .message-bubble {
+            max-width: 85%;
+            padding: 0.75rem 1.25rem;
+            border-radius: 1.25rem; /* rounded-xl */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            line-height: 1.5;
+        }
+        .user-message {
+            background-color: #6366f1; /* indigo-500 */
+            color: #ffffff;
+            margin-left: auto;
+            border-bottom-right-radius: 0.25rem; /* rounded-br-sm */
+        }
+        .bot-message {
+            background-color: #334155; /* slate-700 */
+            color: #e2e8f0;
+            margin-right: auto;
+            border-bottom-left-radius: 0.25rem; /* rounded-bl-sm */
+        }
+        .bot-message p {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Service Card Styling */
+        .service-card {
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 1rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-top: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            color: #f8fafc;
+        }
+        .service-card h4 {
+            font-weight: 600;
+            font-size: 1.25rem; /* text-xl */
+            margin-bottom: 0.25rem;
+        }
+        .service-card .description {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            margin-bottom: 0.5rem;
+        }
+        .service-card .details-list {
+            text-align: left;
+            width: 100%;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+        .service-card .details-list li {
+            list-style: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .service-card .price {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #a78bfa; /* violet-400 */
+            margin-bottom: 0.75rem;
+        }
+        .service-card .button-group {
+            display: flex;
+            gap: 0.75rem;
+            width: 100%;
+            justify-content: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .service-card button {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            box-sizing: border-box;
+        }
+        .service-card .book-btn {
+            background-color: #10b981; /* emerald-500 */
+            color: white;
+        }
+        .service-card .book-btn:hover {
+            background-color: #059669; /* emerald-600 */
+            transform: translateY(-1px);
+        }
+        .service-card .view-info-btn {
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+        }
+        .service-card .view-info-btn:hover {
+            background-color: #d97706; /* amber-600 */
+            transform: translateY(-1px);
+        }
+
+        /* Simple Service List */
+        .simple-service-list {
+            margin-top: 0.75rem;
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            color: #e2e8f0;
+        }
+        .simple-service-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .simple-service-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #4a5568; /* gray-600 */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .simple-service-list li:last-child {
+            border-bottom: none;
+        }
+        .simple-service-list .service-name {
+            font-weight: 600;
+            color: #f8fafc;
+            flex-grow: 1;
+        }
+        .simple-service-list .service-price {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            flex-shrink: 0;
+        }
+        .simple-service-list button {
+            background-color: #6366f1;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        .simple-service-list button:hover {
+            background-color: #5a5fe0;
+        }
+
+        /* Available Slots List */
+        .available-slots-list {
+            margin-top: 0.75rem;
+            background-color: #2d3748; /* bg-gray-700 */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            color: #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .available-slots-list button {
+            background-color: #22c55e; /* emerald-500 */
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .available-slots-list button:hover {
+            background-color: #10b981; /* emerald-600 */
+            transform: translateY(-1px);
+        }
+
+        /* Suggestion Buttons Styling */
+        .suggestions-area {
+            padding: 1rem;
+            background-color: #334155; /* slate-700 */
+            border-top: 1px solid #475569; /* slate-600 */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .suggestion-button {
+            background-color: #475569; /* slate-600 */
+            color: #e2e8f0;
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem; /* rounded-lg */
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .suggestion-button:hover {
+            background-color: #6366f1; /* indigo-500 */
+            transform: translateY(-2px);
+        }
+        .chat-input-area {
+            background-color: #334155; /* slate-700 */
+            padding: 1.5rem;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        .chat-input-area input {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #475569; /* slate-600 */
+            color: #e2e8f0;
+            padding: 0.8rem 1.2rem;
+            border-radius: 0.75rem;
+            flex-grow: 1;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .chat-input-area input::placeholder {
+            color: #94a3b8; /* slate-400 */
+        }
+        .chat-input-area input:focus {
+            outline: none;
+            border-color: #6366f1; /* indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .chat-input-area button {
+            background-color: #6366f1; /* indigo-600 */
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chat-input-area button:hover {
+            background-color: #5a5fe0; /* indigo-700 */
+            transform: translateY(-1px);
+        }
+        /* Scrollbar styles for modern browsers */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 10px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* indigo-500 */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .chat-container {
+                height: 95vh;
+                border-radius: 0.5rem;
+            }
+            .chat-header {
+                padding: 1rem;
+                font-size: 1.25rem;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            .chat-messages, .suggestions-area, .chat-input-area {
+                padding: 0.75rem;
+            }
+            .message-bubble {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .service-card button {
+                min-width: unset;
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+            .simple-service-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            .simple-service-list button {
+                width: 100%;
+            }
+            .available-slots-list button {
+                flex-grow: 1; /* Make time slots fill available space */
+                min-width: 80px; /* Ensure a minimum width */
+                font-size: 0.85rem;
+                padding: 0.5rem 0.75rem;
+            }
+            .suggestions-area {
+                flex-direction: column;
+            }
+            .suggestion-button {
+                width: 100%;
+                font-size: 0.9rem;
+            }
+            .chat-input-area {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .chat-input-area input, .chat-input-area button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            HealthBot <span class="text-sm font-normal text-slate-300">- Asistente Médico</span>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+            </div>
+        <div id="suggestionsArea" class="suggestions-area">
+            </div>
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Escribe tu mensaje..." autocomplete="off">
+            <button onclick="sendUserMessage()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                    <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                </svg>
+                Enviar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const suggestionsArea = document.getElementById('suggestionsArea');
+        // Inicializar currentContext con la nueva estructura para patient_info
+        let currentContext = {
+            step: 'welcome',
+            selected_service_code: null,
+            selected_doctor: null, // Asegurar que selected_doctor se inicialice
+            booking_details: {},
+            patient_info: {
+                prepaga: null,
+                name: null,
+                phone: null,
+                email: null
+            },
+            booking_id_for_action: null, // Para reagendar/cancelar
+            current_action: null // Para saber si estamos reagendando o cancelando
+        };
+
+        function addMessage(sender, text, data = null) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message-bubble');
+
+            if (sender === 'user') {
+                messageElement.classList.add('user-message');
+                messageElement.textContent = text;
+            } else {
+                messageElement.classList.add('bot-message');
+                let innerContent = `<p>${text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`; // Apply Markdown to initial text
+
+                // Render simple service list (Ver servicios)
+                if (data && data.type === 'simple_service_list' && data.services) {
+                    innerContent += `<div class="simple-service-list mt-2"><ul>`;
+                    data.services.forEach(service => {
+                        innerContent += `
+                            <li>
+                                <span class="service-name">${service.name}</span>
+                                <span class="service-price">$${service.price.toFixed(2)}</span>
+                                <button onclick="sendMessage('ver_servicio_${service.code}')">Ver detalles</button>
+                            </li>
+                        `;
+                    });
+                    innerContent += `</ul></div>`;
+                }
+                // Render detailed service card (Ver detalles de un servicio específico)
+                else if (data && data.type === 'service_card') {
+                    // Adaptar la lista de detalles para HealthBot
+                    let detailsList = `
+                        <ul class="details-list">
+                            <li><strong>Especialidad:</strong> ${data.specialty || 'N/A'}</li>
+                            <li><strong>Doctor(a):</strong> ${data.doctor || 'N/A'}</li>
+                            <li><strong>Duración estimada:</strong> ${data.duration_minutes} minutos</li>
+                        </ul>
+                    `;
+                    // Añadir precio si existe
+                    if (data.price !== undefined && data.price !== null) {
+                        detailsList += `<p class="price">Precio: $${data.price.toFixed(2)}</p>`;
+                    } else {
+                        detailsList += `<p class="price">Precio: A consultar</p>`; // Ocultar si no hay precio
+                    }
+
+                    innerContent += `
+                        <div class="service-card">
+                            <h4>${data.name}</h4>
+                            <p class="description">${data.description || ''}</p>
+                            ${detailsList}
+                            <div class="button-group">
+                                <button class="book-btn" onclick="sendMessage('agendar_servicio_${data.code}')">Agendar este servicio</button>
+                                <button class="view-info-btn" onclick="sendMessage('mas_informacion_${data.code}')">Más información</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                // Render available slots for booking/rescheduling
+                else if (data && data.type === 'available_slots' && data.slots) {
+                    // The main text for available slots comes in the `text` parameter, e.g., "Aquí tienes los horarios disponibles..."
+                    // This block adds the buttons for slots.
+                    innerContent += `<div class="available-slots-list mt-2">`;
+                    data.slots.forEach(slot => {
+                        // Crucial: el comando incluye la fecha (data.date) y la hora
+                        innerContent += `
+                            <button onclick="sendMessage('slot_selected_${data.date}_${slot.replace(':', '-')}')">
+                                ${slot}
+                            </button>
+                        `;
+                    });
+                    innerContent += `</div>`;
+                }
+                // Check if the response contains raw text for long_description (from 'mas_informacion_')
+                else if (data && data.type === 'text_with_action' && data.response_text) {
+                    innerContent = `<p>${data.response_text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>`;
+                    if (data.service_code) { // Si viene un service_code, se asume que se puede agendar
+                           innerContent += `
+                                <div class="button-group">
+                                    <button class="book-btn" onclick="sendMessage('agendar_servicio_${data.service_code}')">Agendar este servicio</button>
+                                </div>
+                            `;
+                    }
+                }
+                // No need to handle 'action_buttons' type here directly, as renderSuggestions does it.
+
+                messageElement.innerHTML = innerContent;
+            }
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+
+        // Modificar renderSuggestions para aceptar un array de botones directo
+        // Esto permite que el backend envíe directamente los botones si lo desea.
+        // La lógica del renderSuggestions original se moverá a una función auxiliar si es necesario.
+        function renderSuggestions(stepOrButtonsArray, optionalButtonsArray) {
+            suggestionsArea.innerHTML = ''; // Limpiar botones existentes
+            let suggestions = [];
+
+            if (Array.isArray(stepOrButtonsArray)) {
+                // Si el primer argumento es un array, lo usamos directamente como botones
+                suggestions = stepOrButtonsArray;
+            } else if (optionalButtonsArray && Array.isArray(optionalButtonsArray)) {
+                // Si se pasa un step (stepOrButtonsArray) Y un array de botones (optionalButtonsArray),
+                // usamos los botones pasados, ignorando el step para la generación de botones predefinidos.
+                suggestions = optionalButtonsArray;
+            } else {
+                // Comportamiento original basado en el step del contexto
+                const step = stepOrButtonsArray; // stepOrButtonsArray es el 'step' en este caso
+                switch (step) {
+                    case 'welcome':
+                    case 'main_menu':
+                    case 'goodbye':
+                    case 'service_list_provided':
+                    case 'service_info_provided':
+                    case 'booking_confirmed':
+                    case 'human_contact_collected':
+                    case 'service_long_info_provided':
+                    case 'booking_cancelled':
+                    case 'booking_rescheduled':
+                        suggestions = [
+                            { text: "Ver servicios", action: "servicios" },
+                            { text: "Agendar una cita", action: "agendar cita" },
+                            { text: "Reagendar cita", action: "reagendar cita" },
+                            { text: "Cancelar cita", action: "cancelar cita" },
+                            { text: "Hablar con un asesor", action: "hablar con un asesor" },
+                            { text: "Reiniciar", action: "reiniciar" }
+                        ];
+                        break;
+                    case 'awaiting_service_for_booking':
+                    case 'awaiting_service_for_info':
+                        suggestions = [
+                            { text: "Clínica Médica", action: "Clínica Médica" },
+                            { text: "Odontología", action: "Odontología" },
+                            { text: "Dermatología", action: "Dermatología" },
+                            { text: "Pediatría", action: "Pediatría" },
+                            { text: "Ver todos los servicios", action: "servicios" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_booking_date':
+                    case 'awaiting_reschedule_date':
+                        suggestions = [
+                            { text: "Hoy", action: "hoy" },
+                            { text: "Mañana", action: "mañana" },
+                            { text: "Pasado mañana", action: "pasado mañana" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_booking_time':
+                    case 'awaiting_reschedule_time':
+                        // Los slots se renderizan directamente en addMessage, aquí damos opciones de navegación
+                        suggestions = [
+                            { text: "Elegir otra fecha", action: "agendar cita" }, // O reagendar cita si es el caso
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_prepaga':
+                        suggestions = [
+                            { text: "OSDE", action: "OSDE" },
+                            { text: "Swiss Medical", action: "Swiss Medical" },
+                            { text: "Galeno", action: "Galeno" },
+                            { text: "No tengo", action: "no tengo prepaga" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_patient_name':
+                        suggestions = [
+                            { text: "Mi nombre es [Tu Nombre]", action: "Soy [Tu Nombre]" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_patient_phone':
+                        suggestions = [
+                            { text: "Mi teléfono es +5491112345678", action: "+5491112345678" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_patient_email':
+                        suggestions = [
+                            { text: "Mi email es test@example.com", action: "test@example.com" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'confirm_booking_data':
+                        suggestions = [
+                            { text: "Confirmar cita", action: "confirmar_cita" },
+                            { text: "Modificar datos", action: "modificar_datos" },
+                            { text: "Cancelar", action: "cancelar" }
+                        ];
+                        break;
+                    case 'awaiting_booking_id_for_action':
+                        suggestions = [
+                            { text: "Mi ID es HLT-1000", action: "HLT-1000" }, // ID de ejemplo para HealthBot
+                            { text: "Hablar con un asesor", action: "hablar con un asesor" },
+                            { text: "Volver al menú principal", action: "menu principal" }
+                        ];
+                        break;
+                    case 'confirm_cancelation':
+                        suggestions = [
+                            { text: "Sí, cancelar", action: "confirm_cancelation" },
+                            { text: "No, mantener", action: "no_cancelar" } // Nuevo action
+                        ];
+                        break;
+                    case 'collect_contact_for_human_healthbot':
+                        suggestions = [
+                            { text: "Soy Laura Gómez, +5491112345678", action: "Soy Laura Gómez, mi teléfono es +5491112345678" },
+                            { text: "Volver al menú principal", action: "menu principal" }
+                        ];
+                        break;
+                    default:
+                        suggestions = [ // Opciones por defecto si el estado no está manejado
+                            { text: "Ver servicios", action: "servicios" },
+                            { text: "Agendar una cita", action: "agendar cita" },
+                            { text: "Reagendar cita", action: "reagendar cita" },
+                            { text: "Cancelar cita", action: "cancelar cita" },
+                            { text: "Hablar con un asesor", action: "hablar con un asesor" },
+                            { text: "Reiniciar", action: "reiniciar" }
+                        ];
+                        break;
+                }
+            }
+
+            const uniqueSuggestions = [];
+            const seenActions = new Set();
+            for (const sug of suggestions) {
+                if (!seenActions.has(sug.action)) {
+                    uniqueSuggestions.push(sug);
+                    seenActions.add(sug.action);
+                }
+            }
+
+            uniqueSuggestions.forEach(sug => {
+                const button = document.createElement('button');
+                button.classList.add('suggestion-button');
+                button.textContent = sug.text;
+                button.onclick = () => sendMessage(sug.action);
+                suggestionsArea.appendChild(button);
+            });
+        }
+
+        async function sendMessage(messageText) {
+            if (messageText.trim() === '') return;
+
+            // Update userInput.value if message comes from a suggestion button
+            // This ensures the input field reflects what was sent by button click
+            if (userInput.value !== messageText) {
+                 userInput.value = messageText;
+            }
+
+            addMessage('user', messageText);
+            userInput.value = ''; // Clear input after sending
+
+            // Clear suggestions immediately to avoid stale buttons
+            suggestionsArea.innerHTML = '';
+
+            try {
+                const response = await fetch('http://localhost:5010/api/healthbot_chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: messageText, context: currentContext, user_id: 'web_user_healthbot' }),
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.json().catch(() => ({ message: "Unknown error" }));
+                    console.error('Server error response:', errorBody);
+                    addMessage('bot', `Lo siento, hubo un problema técnico al comunicarme con HealthBot. Error: ${errorBody.message || 'Desconocido'}. Asegúrate de que el servidor esté activo (puerto 5010).`);
+                    // Render main menu buttons on critical error for easier recovery
+                    renderSuggestions('main_menu');
+                    return; // Stop further processing if there's a critical error
+                }
+
+                const data = await response.json();
+                currentContext = data.context; // Update context with the new one from backend
+
+                addMessage('bot', data.response, data.data || null);
+
+                // IMPORTANT: Always render suggestions based on the new context step,
+                // and if the backend specifically sends 'action_buttons' type, use those.
+                if (data.data && data.data.type === 'action_buttons') {
+                    // Si el backend envía botones de acción, úsalos directamente
+                    renderSuggestions(data.data.buttons);
+                } else {
+                    // Si no, recurre a las sugerencias basadas en el paso del contexto
+                    renderSuggestions(currentContext.step);
+                }
+
+            } catch (error) {
+                console.error('Error communicating with HealthBot backend:', error);
+                addMessage('bot', 'Lo siento, hubo un problema de conexión al comunicarme con HealthBot. Asegúrate de que el servidor esté activo (puerto 5010).');
+                renderSuggestions('main_menu'); // Re-render main menu buttons on connection error
+            }
+        }
+
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+
+        function sendUserMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                sendMessage(message);
+            }
+        }
+
+        window.onload = function() {
+            sendMessage('hola'); // Initial greeting
+        };
+    </script>
+</body>
+</html>
